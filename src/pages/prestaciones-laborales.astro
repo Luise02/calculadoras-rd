@@ -1,0 +1,178 @@
+---
+import Base from '../layouts/Base.astro';
+import AdSlot from '../components/AdSlot.astro';
+import PageHeader from '../components/PageHeader.astro';
+import OtrasHerramientas from '../components/OtrasHerramientas.astro';
+import { CONFIG } from '../lib/finanzas';
+const hoy = new Date().toISOString().slice(0, 10);
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: `Calculadora de prestaciones laborales RD ${CONFIG.anio}`,
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Any',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'DOP' },
+};
+---
+<Base
+  title={`Calculadora de prestaciones laborales ${CONFIG.anio}`}
+  description="Calcula preaviso, cesantía, vacaciones y salario de Navidad según el Código de Trabajo dominicano. Para desahucio, despido o renuncia."
+  schema={schema}
+>
+  <PageHeader
+    href="/prestaciones-laborales/"
+    titulo={`Prestaciones laborales ${CONFIG.anio}`}
+    lead="Estima lo que te corresponde al terminar tu contrato según el Código de Trabajo (Ley 16-92): preaviso, auxilio de cesantía, vacaciones y salario de Navidad."
+  />
+
+  <div class="calc">
+    <form class="panel" id="form" onsubmit="return false">
+      <p class="panel__titulo">Tus datos</p>
+      <div class="row">
+        <div class="field">
+          <label for="ingreso">Fecha de ingreso</label>
+          <input id="ingreso" type="date" value="2021-01-10" />
+        </div>
+        <div class="field">
+          <label for="salida">Fecha de salida</label>
+          <input id="salida" type="date" value={hoy} />
+        </div>
+      </div>
+      <div class="field">
+        <label for="salario">Salario mensual (RD$)</label>
+        <input id="salario" type="number" inputmode="decimal" min="0" step="0.01" value="50000" />
+        <small>Si tu salario varía (comisiones), usa el promedio de los últimos 12 meses.</small>
+      </div>
+      <div class="field">
+        <label for="motivo">Motivo de salida</label>
+        <select id="motivo">
+          <option value="desahucio">Desahucio (el empleador terminó sin alegar causa)</option>
+          <option value="despido_injustificado">Despido injustificado</option>
+          <option value="despido_justificado">Despido justificado</option>
+          <option value="renuncia">Renuncia</option>
+          <option value="dimision_justificada">Dimisión justificada</option>
+        </select>
+      </div>
+      <label class="check"><input type="checkbox" id="preaviso" /> El empleador me dio el preaviso y lo trabajé</label>
+      <label class="check"><input type="checkbox" id="vacaciones" /> Tengo las vacaciones del último año completo sin tomar</label>
+      <label class="check"><input type="checkbox" id="regalia" /> Ya me pagaron el salario de Navidad de este año</label>
+    </form>
+
+    <div class="recibo" aria-live="polite">
+      <div class="recibo__top">
+        <span class="recibo__titulo">Liquidación estimada</span>
+        <span class="recibo__fecha" id="diario"></span>
+      </div>
+      <p class="muted" id="antiguedad" style="margin:0 0 .4rem"></p>
+      <table class="recibo__lineas"><tbody id="conceptos"></tbody></table>
+      <div class="recibo__neto">
+        <span>Total a recibir</span>
+        <strong id="total">—</strong>
+      </div>
+      <p class="recibo__nota">
+        El preaviso y la cesantía no pagan ISR (Art. 86 del Código de Trabajo). Si el empleador no paga en 10 días,
+        el Art. 86 le impone un día de salario por cada día de retraso.
+      </p>
+    </div>
+  </div>
+
+  <AdSlot />
+
+  <article class="prose">
+    <h2>Qué te toca según el motivo de salida</h2>
+    <table>
+      <thead><tr><th>Motivo</th><th>Preaviso</th><th>Cesantía</th><th>Vacaciones</th><th>Salario de Navidad</th></tr></thead>
+      <tbody>
+        <tr><td>Desahucio</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+        <tr><td>Despido injustificado</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+        <tr><td>Despido justificado</td><td>No</td><td>No</td><td>Sí</td><td>Sí</td></tr>
+        <tr><td>Renuncia</td><td>No</td><td>No</td><td>Sí</td><td>Sí</td></tr>
+        <tr><td>Dimisión justificada</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Paso 1: el salario diario</h2>
+    <p>
+      Todas las prestaciones se pagan en días de salario. El salario diario se obtiene dividiendo el salario
+      mensual entre <strong>23.83</strong>, el promedio de días laborables de un mes. Por ejemplo,
+      RD$ 50,000 ÷ 23.83 = RD$ 2,098.20 por día.
+    </p>
+
+    <h2>Paso 2: preaviso (Art. 76)</h2>
+    <table>
+      <thead><tr><th>Tiempo trabajado</th><th>Días de preaviso</th></tr></thead>
+      <tbody>
+        <tr><td>Menos de 3 meses</td><td>0</td></tr>
+        <tr><td>De 3 a 6 meses</td><td>7</td></tr>
+        <tr><td>De 6 meses a 1 año</td><td>14</td></tr>
+        <tr><td>Más de 1 año</td><td>28</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Paso 3: auxilio de cesantía (Art. 80)</h2>
+    <table>
+      <thead><tr><th>Tiempo trabajado</th><th>Días de cesantía</th></tr></thead>
+      <tbody>
+        <tr><td>De 3 a 6 meses</td><td>6 días</td></tr>
+        <tr><td>De 6 meses a 1 año</td><td>13 días</td></tr>
+        <tr><td>De 1 a 5 años</td><td>21 días por cada año</td></tr>
+        <tr><td>5 años o más</td><td>23 días por cada año</td></tr>
+      </tbody>
+    </table>
+    <p>
+      Si además del último año completo trabajaste una fracción mayor de 3 meses, se suman 6 días (de 3 a 6
+      meses) o 13 días (6 meses o más).
+    </p>
+
+    <h2>Paso 4: vacaciones y salario de Navidad</h2>
+    <p>
+      Las vacaciones se pagan siempre, sin importar el motivo de salida: 14 días por año trabajado (18 a partir
+      del quinto año) y una parte proporcional si el año en curso tiene 5 meses o más (Art. 180). El salario de
+      Navidad equivale a la doceava parte de lo que ganaste en el año calendario (Art. 219).
+    </p>
+
+    <p class="notice">
+      Esta herramienta da un estimado. Casos con salarios variables, suspensiones del contrato o años trabajados
+      antes de 1992 pueden cambiar el resultado. Para un caso real, verifica con la calculadora del Ministerio de
+      Trabajo o con un abogado laboral.
+    </p>
+  </article>
+
+  <OtrasHerramientas actual="/prestaciones-laborales/" />
+
+  <script>
+    import { calcularPrestaciones, formatoRD, type MotivoSalida } from '../lib/finanzas';
+    const $ = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as T;
+    const toDate = (v: string) => {
+      const [y, m, d] = v.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    };
+    function render() {
+      const ingreso = $('ingreso').value;
+      const salida = $('salida').value;
+      if (!ingreso || !salida) return;
+      const r = calcularPrestaciones({
+        fechaIngreso: toDate(ingreso),
+        fechaSalida: toDate(salida),
+        salarioMensual: Number($('salario').value) || 0,
+        motivo: $<HTMLSelectElement>('motivo').value as MotivoSalida,
+        preavisoTrabajado: $('preaviso').checked,
+        vacacionesPendientes: $('vacaciones').checked,
+        regaliaYaPagada: $('regalia').checked,
+      });
+      const a = r.antiguedad;
+      $('total').textContent = formatoRD(r.total);
+      $('antiguedad').textContent = `Trabajaste ${a.anios} año(s), ${a.meses} mes(es) y ${a.dias} día(s).`;
+      $('diario').textContent = `Salario diario ${formatoRD(r.salarioDiario)}`;
+      $('conceptos').innerHTML = r.conceptos
+        .map((c) => {
+          const detalle = c.nota ?? (c.dias !== null ? `${c.dias} días de salario` : 'Proporcional al año');
+          return `<tr><td>${c.concepto} <span class="tag">${c.articulo}</span><span class="detalle">${detalle}</span></td><td>${formatoRD(c.monto)}</td></tr>`;
+        })
+        .join('');
+    }
+    $('form').addEventListener('input', render);
+    $('form').addEventListener('change', render);
+    render();
+  </script>
+</Base>

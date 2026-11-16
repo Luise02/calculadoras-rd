@@ -1,0 +1,100 @@
+---
+import Base from '../layouts/Base.astro';
+import OtrasHerramientas from '../components/OtrasHerramientas.astro';
+import { SITE, url } from '../site';
+import { CONFIG, calcularSalarioNeto } from '../lib/finanzas';
+
+const inicial = 45000;
+const r = calcularSalarioNeto(inicial);
+const fmt = (n: number) => 'RD$ ' + n.toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+---
+<Base title="Calculadoras financieras para República Dominicana" description={SITE.descripcion}>
+  <section class="hero">
+    <div>
+      <h1>¿Cuánto te queda de tu sueldo?</h1>
+      <p class="lead">
+        Escribe tu salario y mira tu recibo con AFP, SFS e ISR al instante. Si estás saliendo de un trabajo,
+        pidiendo un préstamo o pensando en alquilar, aquí también tienes con qué sacar la cuenta.
+      </p>
+      <ul class="hero__fuentes" aria-label="Fuentes de los cálculos">
+        <li>Escala ISR <strong>DGII {CONFIG.anio}</strong></li>
+        <li>Topes <strong>TSS</strong> vigentes</li>
+        <li><strong>Código de Trabajo</strong> Ley 16-92</li>
+      </ul>
+    </div>
+
+    <div class="recibo recibo--anima" id="recibo-portada">
+      <div class="recibo__top">
+        <span class="recibo__titulo">Tu recibo de pago</span>
+        <span class="recibo__fecha" id="mes">{CONFIG.actualizado}</span>
+      </div>
+      <label class="recibo__label" for="bruto">Salario bruto mensual</label>
+      <div class="recibo__input">
+        <span>RD$</span>
+        <input id="bruto" type="number" inputmode="decimal" min="0" step="500" value={inicial} />
+      </div>
+      <table class="recibo__lineas">
+        <tbody>
+          <tr><td>Salario bruto</td><td id="l-bruto">{fmt(r.bruto)}</td></tr>
+          <tr class="descuento"><td>AFP <span class="tag">2.87%</span></td><td id="l-afp">− {fmt(r.afp)}</td></tr>
+          <tr class="descuento"><td>SFS <span class="tag">3.04%</span></td><td id="l-sfs">− {fmt(r.sfs)}</td></tr>
+          <tr class="descuento"><td>ISR <span class="tag" id="l-tramo">tramo 15%</span></td><td id="l-isr">− {fmt(r.isr)}</td></tr>
+        </tbody>
+      </table>
+      <div class="recibo__neto">
+        <span>Te llega a la cuenta</span>
+        <strong id="l-neto">{fmt(r.neto)}</strong>
+      </div>
+      <a class="btn btn--full" id="ver-desglose" href={url(`/salario-neto/?bruto=${inicial}`)}>Ver el desglose completo</a>
+    </div>
+  </section>
+
+  <OtrasHerramientas titulo="Todas las calculadoras" />
+
+  <section class="bloque" aria-labelledby="fuentes">
+    <h2 id="fuentes">De dónde salen los números</h2>
+    <div class="fuentes-grid">
+      <div>
+        <span class="fuente-sello">DGII</span>
+        <h3>Impuesto sobre la renta</h3>
+        <p>Usamos la escala anual de retención a asalariados publicada por la DGII para {CONFIG.anio}.</p>
+      </div>
+      <div>
+        <span class="fuente-sello">TSS</span>
+        <h3>Seguridad social</h3>
+        <p>AFP y SFS con sus porcentajes y topes, calculados sobre el salario mínimo cotizable vigente.</p>
+      </div>
+      <div>
+        <span class="fuente-sello">Ley 16-92</span>
+        <h3>Código de Trabajo</h3>
+        <p>Preaviso, cesantía, vacaciones y salario de Navidad según los artículos 76, 80, 177 y 219.</p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:1.5rem">
+      Todo se calcula en tu navegador. No guardamos tu salario ni ningún dato que escribas.
+    </p>
+  </section>
+
+  <script>
+    import { calcularSalarioNeto, formatoRD, formatoPct } from '../lib/finanzas';
+    import { url } from '../site';
+    const $ = (id: string) => document.getElementById(id)!;
+    const input = $('bruto') as HTMLInputElement;
+    const link = $('ver-desglose') as HTMLAnchorElement;
+    const mes = new Date().toLocaleDateString('es-DO', { month: 'long', year: 'numeric' });
+    $('mes').textContent = mes.charAt(0).toUpperCase() + mes.slice(1);
+    function render() {
+      const bruto = Number(input.value) || 0;
+      const r = calcularSalarioNeto(bruto);
+      $('l-bruto').textContent = formatoRD(r.bruto);
+      $('l-afp').textContent = '− ' + formatoRD(r.afp);
+      $('l-sfs').textContent = '− ' + formatoRD(r.sfs);
+      $('l-isr').textContent = '− ' + formatoRD(r.isr);
+      $('l-tramo').textContent = r.tramoIsr ? `tramo ${formatoPct(r.tramoIsr, 0)}` : 'exento';
+      $('l-neto').textContent = formatoRD(r.neto);
+      link.href = url(`/salario-neto/?bruto=${bruto}`);
+    }
+    input.addEventListener('input', render);
+    render();
+  </script>
+</Base>

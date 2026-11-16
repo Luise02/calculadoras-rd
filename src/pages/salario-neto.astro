@@ -1,0 +1,145 @@
+---
+import Base from '../layouts/Base.astro';
+import AdSlot from '../components/AdSlot.astro';
+import PageHeader from '../components/PageHeader.astro';
+import OtrasHerramientas from '../components/OtrasHerramientas.astro';
+import { CONFIG } from '../lib/finanzas';
+
+const topeSfs = CONFIG.tss.salarioMinimoCotizable * CONFIG.tss.topeSfsVeces;
+const topeAfp = CONFIG.tss.salarioMinimoCotizable * CONFIG.tss.topeAfpVeces;
+const fmt = (n: number) => n.toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: `Calculadora de salario neto RD ${CONFIG.anio}`,
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Any',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'DOP' },
+};
+---
+<Base
+  title={`Calculadora de salario neto ${CONFIG.anio} (AFP, SFS e ISR)`}
+  description={`Calcula tu sueldo neto en República Dominicana ${CONFIG.anio}: descuentos de AFP (2.87%), SFS (3.04%) e ISR según la escala de la DGII.`}
+  schema={schema}
+>
+  <PageHeader
+    href="/salario-neto/"
+    titulo={`Salario neto ${CONFIG.anio}`}
+    lead="Escribe tu salario bruto mensual y mira cuánto te descuentan de TSS e ISR y cuánto te llega a la cuenta."
+    actualizado={CONFIG.actualizado}
+  />
+
+  <div class="calc">
+    <form class="panel" id="form" onsubmit="return false">
+      <p class="panel__titulo">Tus datos</p>
+      <div class="field">
+        <label for="bruto">Salario bruto mensual (RD$)</label>
+        <input id="bruto" type="number" inputmode="decimal" min="0" step="0.01" value="50000" />
+      </div>
+      <div class="field">
+        <label for="otros">Otros ingresos gravados mensuales (RD$)</label>
+        <input id="otros" type="number" inputmode="decimal" min="0" step="0.01" value="0" />
+        <small>Comisiones, horas extra u otros pagos que también pagan ISR. Déjalo en 0 si no tienes.</small>
+      </div>
+    </form>
+
+    <div class="recibo" aria-live="polite">
+      <div class="recibo__top">
+        <span class="recibo__titulo">Recibo de pago mensual</span>
+        <span class="recibo__fecha">Estimado</span>
+      </div>
+      <table class="recibo__lineas">
+        <tbody>
+          <tr><td>Salario bruto</td><td id="r-bruto"></td></tr>
+          <tr class="descuento"><td>AFP <span class="tag">2.87%</span></td><td id="r-afp"></td></tr>
+          <tr class="descuento"><td>SFS <span class="tag">3.04%</span></td><td id="r-sfs"></td></tr>
+          <tr class="descuento"><td>ISR <span class="tag" id="r-tramo"></span></td><td id="r-isr"></td></tr>
+          <tr><td><strong>Total descuentos</strong></td><td id="r-total"></td></tr>
+        </tbody>
+      </table>
+      <div class="recibo__neto">
+        <span>Te llega a la cuenta</span>
+        <strong id="neto">—</strong>
+      </div>
+      <p class="recibo__nota" id="r-efectiva"></p>
+    </div>
+  </div>
+
+  <AdSlot />
+
+  <article class="prose">
+    <h2>Cómo se calcula el salario neto en República Dominicana</h2>
+    <p>Tu salario neto es lo que queda después de tres descuentos obligatorios:</p>
+    <ol>
+      <li><strong>AFP (pensiones): 2.87%</strong> del salario, hasta un tope de RD$ {fmt(topeAfp)} mensuales.</li>
+      <li><strong>SFS (salud): 3.04%</strong> del salario, hasta un tope de RD$ {fmt(topeSfs)} mensuales.</li>
+      <li><strong>ISR:</strong> se calcula sobre el salario <em>después</em> de restar AFP y SFS, usando la escala anual de la DGII.</li>
+    </ol>
+    <p>
+      Los topes de la TSS se calculan sobre el salario mínimo cotizable de RD$ {fmt(CONFIG.tss.salarioMinimoCotizable)}:
+      10 veces para el SFS y 20 veces para la AFP. Lo que ganes por encima del tope no paga ese seguro.
+    </p>
+
+    <h2>Escala del ISR para asalariados {CONFIG.anio}</h2>
+    <table>
+      <thead><tr><th>Renta neta anual (RD$)</th><th>Impuesto</th></tr></thead>
+      <tbody>
+        <tr><td>Hasta 416,220.00</td><td>Exento</td></tr>
+        <tr><td>416,220.01 – 624,329.00</td><td>15% del excedente de 416,220.01</td></tr>
+        <tr><td>624,329.01 – 867,123.00</td><td>RD$ 31,216.00 + 20% del excedente de 624,329.01</td></tr>
+        <tr><td>Más de 867,123.01</td><td>RD$ 79,776.00 + 25% del excedente de 867,123.01</td></tr>
+      </tbody>
+    </table>
+    <p class="notice">
+      La Ley 30-26 establece una escala nueva a partir del año fiscal 2027. Actualizaremos esta calculadora
+      cuando entre en vigor.
+    </p>
+
+    <h2>Ejemplo con RD$ 65,000 mensuales</h2>
+    <p>
+      AFP: 65,000 × 2.87% = RD$ 1,865.50. SFS: 65,000 × 3.04% = RD$ 1,976.00. Queda una renta mensual de
+      RD$ 61,158.50, o RD$ 733,902 al año. Eso cae en el tramo del 20%: 31,216 + 20% × (733,902 − 624,329.01)
+      = RD$ 53,130.60 al año, o <strong>RD$ 4,427.55 de ISR al mes</strong>. El neto queda en unos
+      <strong>RD$ 56,731</strong>.
+    </p>
+
+    <h2>Preguntas frecuentes</h2>
+    <h3>¿Desde cuánto salario se paga ISR?</h3>
+    <p>
+      Con la escala {CONFIG.anio}, un asalariado sin otros ingresos empieza a pagar ISR cuando su salario
+      después de AFP y SFS supera RD$ 34,685 al mes (RD$ 416,220 ÷ 12).
+    </p>
+    <h3>¿Por qué mi recibo no coincide exactamente?</h3>
+    <p>
+      Tu empresa puede descontar otros conceptos (seguro complementario, préstamos de cooperativa,
+      dependientes adicionales en la ARS) o pagar quincenal y redondear distinto. Esta calculadora muestra
+      solo los descuentos obligatorios.
+    </p>
+  </article>
+
+  <OtrasHerramientas actual="/salario-neto/" />
+
+  <script>
+    import { calcularSalarioNeto, formatoRD, formatoPct } from '../lib/finanzas';
+    const $ = (id: string) => document.getElementById(id)!;
+    const bruto = $('bruto') as HTMLInputElement;
+    const otros = $('otros') as HTMLInputElement;
+    // permite llegar desde la portada con ?bruto=45000
+    const desdeUrl = new URLSearchParams(location.search).get('bruto');
+    if (desdeUrl && !Number.isNaN(Number(desdeUrl))) bruto.value = desdeUrl;
+    function render() {
+      const r = calcularSalarioNeto(Number(bruto.value) || 0, Number(otros.value) || 0);
+      $('neto').textContent = formatoRD(r.neto);
+      $('r-bruto').textContent = formatoRD(r.bruto);
+      $('r-afp').textContent = '− ' + formatoRD(r.afp);
+      $('r-sfs').textContent = '− ' + formatoRD(r.sfs);
+      $('r-isr').textContent = '− ' + formatoRD(r.isr);
+      $('r-tramo').textContent = r.tramoIsr ? `tramo ${formatoPct(r.tramoIsr, 0)}` : 'exento';
+      $('r-total').textContent = '− ' + formatoRD(r.totalDescuentos);
+      $('r-efectiva').textContent = `Te descuentan el ${formatoPct(r.tasaEfectiva)} de tu salario bruto.`;
+    }
+    bruto.addEventListener('input', render);
+    otros.addEventListener('input', render);
+    render();
+  </script>
+</Base>

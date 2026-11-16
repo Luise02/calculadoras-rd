@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../site';
+---
+<Base title="Términos de uso" description={`Condiciones de uso de las calculadoras de ${SITE.nombre}.`}>
+  <article class="prose">
+    <h1>Términos de uso</h1>
+    <p class="updated">Última actualización: noviembre 2026</p>
+    <p>
+      Las calculadoras de {SITE.nombre} ofrecen <strong>estimados con fines informativos</strong>. Aunque
+      revisamos las fórmulas y las tasas con fuentes oficiales, los resultados pueden diferir de los montos reales
+      por situaciones particulares, cambios en las leyes o redondeos.
+    </p>
+    <p>
+      Los resultados no constituyen asesoría legal, contable, tributaria ni financiera. Antes de tomar una decisión
+      importante, consulta con un profesional o con la institución correspondiente (DGII, TSS, Ministerio de
+      Trabajo o tu banco).
+    </p>
+    <p>
+      El contenido del sitio es propiedad de {SITE.nombre}. Puedes enlazarlo libremente, pero no copiarlo sin
+      permiso.
+    </p>
+  </article>
+</Base>

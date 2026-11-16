@@ -1,0 +1,24 @@
+---
+import Icon from './Icon.astro';
+import { HERRAMIENTAS, url } from '../site';
+interface Props { actual?: string; titulo?: string }
+const { actual, titulo = 'Otras calculadoras' } = Astro.props;
+const lista = HERRAMIENTAS.filter((h) => h.href !== actual);
+---
+<section class="tool-list-wrap" aria-labelledby="otras">
+  <h2 id="otras">{titulo}</h2>
+  <ul class="tool-list">
+    {lista.map((h) => (
+      <li>
+        <a href={url(h.href)} style={`--tool:${h.color}`}>
+          <span class="tool-icon"><Icon name={h.icono} /></span>
+          <span class="tool-list__text">
+            <strong>{h.titulo}</strong>
+            <span>{h.texto}</span>
+          </span>
+          <svg class="tool-list__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>

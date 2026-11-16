@@ -1,0 +1,142 @@
+---
+import Base from '../layouts/Base.astro';
+import AdSlot from '../components/AdSlot.astro';
+import PageHeader from '../components/PageHeader.astro';
+import OtrasHerramientas from '../components/OtrasHerramientas.astro';
+import { url } from '../site';
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Calculadora de rentabilidad de alquiler en RD',
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Any',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'DOP' },
+};
+---
+<Base
+  title="Calculadora de rentabilidad de alquiler"
+  description="Calcula el ingreso neto, la rentabilidad y los años para recuperar la inversión de un apartamento o casa en alquiler en República Dominicana."
+  schema={schema}
+>
+  <PageHeader
+    href="/rentabilidad-alquiler/"
+    titulo="Rentabilidad de alquiler"
+    lead="¿Vale la pena comprar para alquilar? Calcula cuánto te deja realmente un inmueble después de gastos y en cuántos años recuperas lo invertido."
+  />
+
+  <div class="calc">
+    <form class="panel" id="form" onsubmit="return false">
+      <p class="panel__titulo">El inmueble</p>
+      <div class="field">
+        <label for="precio">Precio de compra (RD$)</label>
+        <input id="precio" type="number" inputmode="decimal" min="0" step="10000" value="5000000" />
+      </div>
+      <div class="field">
+        <label for="iniciales">Gastos iniciales (RD$)</label>
+        <input id="iniciales" type="number" inputmode="decimal" min="0" step="1000" value="400000" />
+        <small>Gastos de cierre, impuesto de transferencia, remodelación y muebles.</small>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="alquiler">Alquiler mensual (RD$)</label>
+          <input id="alquiler" type="number" inputmode="decimal" min="0" step="500" value="35000" />
+        </div>
+        <div class="field">
+          <label for="ocupados">Meses alquilado al año</label>
+          <input id="ocupados" type="number" inputmode="numeric" min="0" max="12" step="1" value="11" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="gastos">Gastos mensuales (RD$)</label>
+          <input id="gastos" type="number" inputmode="decimal" min="0" step="100" value="4000" />
+          <small>Mantenimiento, condominio, reparaciones.</small>
+        </div>
+        <div class="field">
+          <label for="impuestos">Impuestos anuales (RD$)</label>
+          <input id="impuestos" type="number" inputmode="decimal" min="0" step="100" value="0" />
+          <small>IPI, si aplica.</small>
+        </div>
+      </div>
+      <div class="field">
+        <label for="comision">Comisión de administración (%)</label>
+        <input id="comision" type="number" inputmode="decimal" min="0" max="100" step="0.5" value="0" />
+        <small>Si una inmobiliaria cobra y administra por ti (suele ser 8–10%).</small>
+      </div>
+    </form>
+
+    <div class="recibo" aria-live="polite">
+      <div class="recibo__top">
+        <span class="recibo__titulo">Balance del primer año</span>
+        <span class="recibo__fecha" id="r-anios"></span>
+      </div>
+      <table class="recibo__lineas">
+        <tbody>
+          <tr><td>Inversión total</td><td id="r-inversion"></td></tr>
+          <tr><td>Alquiler cobrado en el año</td><td id="r-bruto"></td></tr>
+          <tr class="descuento"><td>Gastos del año</td><td id="r-gastos"></td></tr>
+          <tr><td>Te queda en el año<span class="detalle" id="r-mensual"></span></td><td id="r-neto"></td></tr>
+          <tr><td>Rentabilidad bruta<span class="detalle">La que suelen anunciar los vendedores</span></td><td id="r-brutapct"></td></tr>
+        </tbody>
+      </table>
+      <div class="recibo__neto">
+        <span>Rentabilidad neta anual</span>
+        <strong id="neta">—</strong>
+      </div>
+    </div>
+  </div>
+
+  <AdSlot />
+
+  <article class="prose">
+    <h2>Rentabilidad bruta vs. neta</h2>
+    <p>
+      La <strong>rentabilidad bruta</strong> divide el alquiler de 12 meses entre el precio de compra. Es la cifra
+      que suelen dar los vendedores, pero ignora los gastos. La <strong>rentabilidad neta</strong> resta los meses
+      vacíos, el mantenimiento, los impuestos y la comisión, y la divide entre todo lo que invertiste. Esa es la
+      que te dice si el negocio vale la pena.
+    </p>
+    <h2>Qué se considera una buena rentabilidad</h2>
+    <p>
+      Compárala con lo que ganarías sin riesgo: si un certificado financiero te paga más que la rentabilidad neta
+      del inmueble, el alquiler solo tiene sentido si esperas que la propiedad suba de valor.
+    </p>
+    <h2>Lo que esta calculadora no incluye</h2>
+    <ul>
+      <li>El <strong>ISR sobre los alquileres</strong>, que depende de tus otros ingresos.</li>
+      <li>La <strong>plusvalía</strong> (si el inmueble sube de precio con los años).</li>
+      <li>El <strong>financiamiento</strong>: si compras con préstamo, usa el <a href={url('/prestamos/')}>simulador de préstamos</a> y suma la cuota a los gastos mensuales.</li>
+    </ul>
+  </article>
+
+  <OtrasHerramientas actual="/rentabilidad-alquiler/" />
+
+  <script>
+    import { calcularAlquiler, formatoPct, formatoRD } from '../lib/finanzas';
+    const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+    const n = (id: string) => Number($(id).value) || 0;
+    function render() {
+      const r = calcularAlquiler({
+        precioCompra: n('precio'),
+        gastosIniciales: n('iniciales'),
+        alquilerMensual: n('alquiler'),
+        mesesOcupados: n('ocupados'),
+        gastosMensuales: n('gastos'),
+        impuestosAnuales: n('impuestos'),
+        comisionAdministracionPct: n('comision'),
+      });
+      $('neta').textContent = formatoPct(r.rentabilidadNeta);
+      $('r-inversion').textContent = formatoRD(r.inversionTotal);
+      $('r-bruto').textContent = formatoRD(r.ingresoBrutoAnual);
+      $('r-gastos').textContent = '− ' + formatoRD(r.gastosAnuales);
+      $('r-neto').textContent = formatoRD(r.ingresoNetoAnual);
+      $('r-mensual').textContent = `${formatoRD(r.ingresoNetoMensual)} al mes en promedio`;
+      $('r-brutapct').textContent = formatoPct(r.rentabilidadBruta);
+      $('r-anios').textContent = r.aniosRecuperacion
+        ? `Recuperas la inversión en ${r.aniosRecuperacion.toFixed(1)} años`
+        : 'Con estos números no se recupera';
+    }
+    $('form').addEventListener('input', render);
+    render();
+  </script>
+</Base>

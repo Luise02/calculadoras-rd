@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../site';
+---
+<Base title="Política de privacidad" description={`Cómo ${SITE.nombre} trata tus datos, cookies y publicidad.`}>
+  <article class="prose">
+    <h1>Política de privacidad</h1>
+    <p class="updated">Última actualización: noviembre 2026</p>
+
+    <h2>Datos que escribes en las calculadoras</h2>
+    <p>
+      Los cálculos se hacen en tu navegador. Los montos, fechas y demás datos que escribes en las calculadoras no
+      se envían ni se guardan en ningún servidor.
+    </p>
+
+    <h2>Cookies y publicidad</h2>
+    <p>
+      Este sitio puede mostrar anuncios de Google AdSense. Google y sus socios usan cookies para mostrar anuncios
+      basados en tus visitas anteriores a este y otros sitios web. Puedes desactivar la publicidad personalizada en
+      la <a href="https://adssettings.google.com" rel="nofollow noopener">configuración de anuncios de Google</a>.
+      Para saber más, consulta <a href="https://policies.google.com/technologies/partner-sites" rel="nofollow noopener">cómo
+      usa Google los datos de los sitios que usan sus servicios</a>.
+    </p>
+
+    <h2>Estadísticas</h2>
+    <p>
+      Podemos usar herramientas de analítica para saber cuántas personas visitan cada página. Esos datos son
+      agregados y no te identifican personalmente.
+    </p>
+
+    <h2>Enlaces externos</h2>
+    <p>Algunas páginas enlazan a sitios de terceros. No somos responsables de sus políticas de privacidad.</p>
+
+    <h2>Contacto</h2>
+    <p>Si tienes preguntas sobre esta política, escríbenos a <a href={`mailto:${SITE.email}`}>{SITE.email}</a>.</p>
+  </article>
+</Base>

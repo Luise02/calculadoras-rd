@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE, url } from '../site';
+---
+<Base title="Sobre nosotros" description={`Quién está detrás de ${SITE.nombre} y cómo mantenemos actualizadas las calculadoras.`}>
+  <article class="prose">
+    <h1>Sobre nosotros</h1>
+    <p>
+      {SITE.nombre} es un proyecto creado en Santo Domingo por un ingeniero de software con más de seis años de
+      experiencia en el sector financiero dominicano, en banca y burós de crédito.
+    </p>
+    <p>
+      La idea es simple: que cualquier persona pueda calcular su salario neto, sus prestaciones o la cuota de un
+      préstamo en segundos, con las reglas dominicanas vigentes y sin tener que registrarse ni dar sus datos.
+    </p>
+    <h2>Cómo mantenemos los datos al día</h2>
+    <p>
+      Cada calculadora indica la fecha de su última actualización. Revisamos las escalas del ISR (DGII), los
+      porcentajes y topes de la TSS y los cambios al Código de Trabajo cada vez que se publican.
+    </p>
+    <p>
+      ¿Encontraste un error? Escríbenos desde la página de <a href={url('/contacto/')}>contacto</a> y lo corregimos.
+    </p>
+  </article>
+</Base>

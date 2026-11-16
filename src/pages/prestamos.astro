@@ -1,0 +1,125 @@
+---
+import Base from '../layouts/Base.astro';
+import AdSlot from '../components/AdSlot.astro';
+import PageHeader from '../components/PageHeader.astro';
+import OtrasHerramientas from '../components/OtrasHerramientas.astro';
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Simulador de préstamos en pesos dominicanos',
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Any',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'DOP' },
+};
+---
+<Base
+  title="Simulador de préstamos: cuota mensual y tabla de amortización"
+  description="Calcula la cuota de tu préstamo personal, de vehículo o hipotecario en RD$, los intereses totales y la tabla de amortización mes a mes."
+  schema={schema}
+>
+  <PageHeader
+    href="/prestamos/"
+    titulo="Simulador de préstamos"
+    lead="Calcula la cuota mensual de un préstamo personal, de vehículo o hipotecario y cuánto pagarás en intereses."
+  />
+
+  <div class="calc">
+    <form class="panel" id="form" onsubmit="return false">
+      <p class="panel__titulo">El préstamo</p>
+      <div class="field">
+        <label for="monto">Monto del préstamo (RD$)</label>
+        <input id="monto" type="number" inputmode="decimal" min="0" step="1000" value="1000000" />
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="tasa">Tasa anual (%)</label>
+          <input id="tasa" type="number" inputmode="decimal" min="0" step="0.01" value="14" />
+        </div>
+        <div class="field">
+          <label for="plazo">Plazo (meses)</label>
+          <input id="plazo" type="number" inputmode="numeric" min="1" max="480" step="1" value="60" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="cargos">Seguros y cargos mensuales (RD$)</label>
+        <input id="cargos" type="number" inputmode="decimal" min="0" step="0.01" value="0" />
+        <small>Seguro de vida, de vehículo o de incendio que el banco suma a la cuota.</small>
+      </div>
+    </form>
+
+    <div class="recibo" aria-live="polite">
+      <div class="recibo__top">
+        <span class="recibo__titulo">Resumen del préstamo</span>
+        <span class="recibo__fecha" id="r-plazo"></span>
+      </div>
+      <table class="recibo__lineas">
+        <tbody>
+          <tr><td>Capital + interés</td><td id="r-cuota"></td></tr>
+          <tr><td>Seguros y cargos</td><td id="r-cargos"></td></tr>
+          <tr class="descuento"><td>Total de intereses<span class="detalle">Lo que le pagas al banco además del capital</span></td><td id="r-intereses"></td></tr>
+          <tr><td><strong>Total a pagar</strong></td><td id="r-total"></td></tr>
+        </tbody>
+      </table>
+      <div class="recibo__neto">
+        <span>Cuota mensual</span>
+        <strong id="cuota">—</strong>
+      </div>
+    </div>
+  </div>
+
+  <h2>Tabla de amortización</h2>
+  <div class="table-wrap">
+    <table class="amort">
+      <thead><tr><th>#</th><th>Cuota</th><th>Interés</th><th>Capital</th><th>Balance</th></tr></thead>
+      <tbody id="tabla"></tbody>
+    </table>
+  </div>
+
+  <AdSlot />
+
+  <article class="prose">
+    <h2>Cómo se calcula la cuota</h2>
+    <p>
+      Los bancos dominicanos usan casi siempre el <strong>sistema francés</strong>: pagas la misma cuota cada mes,
+      pero al principio la mayor parte es interés y al final casi todo es capital. La fórmula es:
+    </p>
+    <p><code>Cuota = Monto × i ÷ (1 − (1 + i)<sup>−n</sup>)</code></p>
+    <p>
+      Donde <em>i</em> es la tasa anual dividida entre 12 y <em>n</em> el número de meses. Por ejemplo,
+      RD$ 1,000,000 al 12% anual a 60 meses da una cuota de RD$ 22,244.45.
+    </p>
+    <h2>Consejos antes de firmar</h2>
+    <ul>
+      <li>Compara la <strong>tasa anual</strong> y también los cargos: un seguro alto puede costar más que una tasa un poco mayor.</li>
+      <li>Pregunta si la tasa es <strong>fija o variable</strong>. En préstamos hipotecarios suele revisarse cada cierto tiempo.</li>
+      <li>Abonar a capital en los primeros años reduce mucho los intereses totales. Pregunta si hay penalidad por pago anticipado.</li>
+    </ul>
+  </article>
+
+  <OtrasHerramientas actual="/prestamos/" />
+
+  <script>
+    import { calcularPrestamo, formatoRD } from '../lib/finanzas';
+    const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+    function render() {
+      const r = calcularPrestamo(
+        Number($('monto').value) || 0,
+        Number($('tasa').value) || 0,
+        Number($('plazo').value) || 1,
+        Number($('cargos').value) || 0,
+      );
+      $('cuota').textContent = formatoRD(r.cuotaTotal);
+      $('r-cuota').textContent = formatoRD(r.cuota);
+      $('r-cargos').textContent = formatoRD(r.cuotaTotal - r.cuota);
+      $('r-intereses').textContent = formatoRD(r.totalIntereses);
+      $('r-total').textContent = formatoRD(r.totalPagado);
+      const meses = r.tabla.length;
+      $('r-plazo').textContent = meses >= 12 && meses % 12 === 0 ? `${meses / 12} año(s)` : `${meses} meses`;
+      $('tabla').innerHTML = r.tabla
+        .map((f) => `<tr><td>${f.numero}</td><td>${formatoRD(f.cuota)}</td><td>${formatoRD(f.interes)}</td><td>${formatoRD(f.capital)}</td><td>${formatoRD(f.balance)}</td></tr>`)
+        .join('');
+    }
+    $('form').addEventListener('input', render);
+    render();
+  </script>
+</Base>

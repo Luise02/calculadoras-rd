@@ -1,0 +1,16 @@
+---
+import Icon from './Icon.astro';
+import { HERRAMIENTAS, url } from '../site';
+interface Props { href: string; titulo: string; lead: string; actualizado?: string }
+const { href, titulo, lead, actualizado } = Astro.props;
+const h = HERRAMIENTAS.find((x) => x.href === href)!;
+---
+<header class="page-head" style={`--tool:${h.color}`}>
+  <a class="crumb" href={url('/')}>Inicio</a>
+  <div class="page-head__row">
+    <span class="tool-icon tool-icon--lg"><Icon name={h.icono} size={30} /></span>
+    <h1>{titulo}</h1>
+  </div>
+  <p class="lead">{lead}</p>
+  {actualizado && <p class="updated">Tasas revisadas en {actualizado}.</p>}
+</header>

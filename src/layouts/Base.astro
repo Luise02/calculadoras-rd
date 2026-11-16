@@ -1,0 +1,98 @@
+---
+import '../styles/global.css';
+import { HERRAMIENTAS, SITE, url } from '../site';
+
+interface Props {
+  title: string;
+  description: string;
+  schema?: Record<string, unknown>;
+}
+const { title, description, schema } = Astro.props;
+const fullTitle = Astro.url.pathname === '/' ? `${SITE.nombre}: ${title}` : `${title} | ${SITE.nombre}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const adsClient = import.meta.env.PUBLIC_ADSENSE_CLIENT;
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/salario-neto/', label: 'Salario neto' },
+  { href: '/prestaciones-laborales/', label: 'Prestaciones' },
+  { href: '/prestamos/', label: 'Préstamos' },
+  { href: '/rentabilidad-alquiler/', label: 'Alquiler' },
+];
+---
+<!doctype html>
+<html lang="es-DO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0e7c86" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml" />
+    <link rel="sitemap" href={url('/sitemap-index.xml')} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="es_DO" />
+    {schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
+    {adsClient && (
+      <script
+        async
+        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsClient}`}
+        crossorigin="anonymous"
+      ></script>
+    )}
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href={url('/')} class="logo" aria-label={`${SITE.nombre}, inicio`}>
+          <span class="logo__mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 3h12v17l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 20z" fill="#fff" />
+              <path d="M9 8h6M9 11.5h3.5" stroke="#0e7c86" stroke-width="1.8" stroke-linecap="round" />
+              <circle cx="15" cy="11.5" r="1.4" fill="#f2a900" />
+            </svg>
+          </span>
+          {SITE.nombre}
+        </a>
+        <nav class="nav" aria-label="Principal">
+          {nav.map((n) => (
+            <a href={url(n.href)} aria-current={path === url(n.href) ? 'page' : undefined}>{n.label}</a>
+          ))}
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div>
+          <a href={url('/')} class="logo">{SITE.nombre}</a>
+          <p>Calculadoras gratuitas con las reglas dominicanas: DGII, TSS y Código de Trabajo. Sin registro y sin guardar tus datos.</p>
+        </div>
+        <div>
+          <h3>Calculadoras</h3>
+          <ul>{HERRAMIENTAS.map((h) => <li><a href={url(h.href)}>{h.titulo}</a></li>)}</ul>
+        </div>
+        <div>
+          <h3>El sitio</h3>
+          <ul>
+            <li><a href={url('/sobre-nosotros/')}>Sobre nosotros</a></li>
+            <li><a href={url('/contacto/')}>Contacto</a></li>
+            <li><a href={url('/privacidad/')}>Política de privacidad</a></li>
+            <li><a href={url('/terminos/')}>Términos de uso</a></li>
+          </ul>
+        </div>
+        <p class="copy">
+          © {new Date().getFullYear()} {SITE.nombre}. Los resultados son estimados informativos y no sustituyen la
+          asesoría de un contador o abogado.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

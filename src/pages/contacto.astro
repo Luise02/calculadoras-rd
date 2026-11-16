@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../site';
+---
+<Base title="Contacto" description={`Contacta a ${SITE.nombre} para reportar errores o sugerir nuevas calculadoras.`}>
+  <article class="prose">
+    <h1>Contacto</h1>
+    <p>Escríbenos para reportar un error, sugerir una calculadora nueva o proponer una colaboración:</p>
+    <p><a href={`mailto:${SITE.email}`}><strong>{SITE.email}</strong></a></p>
+    <p>Respondemos normalmente en 2 o 3 días laborables.</p>
+  </article>
+</Base>
